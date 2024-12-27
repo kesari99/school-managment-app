@@ -1,0 +1,212 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       String @id
+  username String @unique
+}
+
+model Student {
+  id        String   @id
+  username  String   @unique
+  name      String
+  surname   String
+  email     String?  @unique
+  phone     String?  @unique
+  address   String
+  img       String?
+  bloodType String
+  sex       UserSex
+  createdAt DateTime @default(now())
+
+  attendances Attendance[]
+  result      Result[]
+
+  parentId String
+  parent   Parent @relation(fields: [parentId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
+
+  gradeId Int
+  grade   Grade @relation(fields: [gradeId], references: [id])
+}
+
+model Parent {
+  id        String    @id
+  username  String    @unique
+  name      String
+  surname   String
+  email     String?   @unique
+  phone     String    @unique
+  address   String
+  createdAt DateTime  @default(now())
+  students  Student[]
+}
+
+model Teacher {
+  id        String    @id
+  username  String    @unique
+  name      String
+  surname   String
+  email     String?   @unique
+  phone     String?   @unique
+  address   String
+  img       String?
+  bloodType String
+  sex       UserSex
+  createdAt DateTime  @default(now())
+  subjects  Subject[]
+  lessons   Lesson[]
+  classes   Class[]
+}
+
+model Grade {
+  id    Int @id @default(autoincrement())
+  level Int @unique
+
+  students Student[]
+  clasess  Class[]
+}
+
+model Class {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  capacity Int
+
+  supervisorId String
+  supervisor   Teacher @relation(fields: [supervisorId], references: [id])
+
+  lessons       Lesson[]
+  student       Student[]
+  events        Event[]
+  announcements Announcement[]
+
+  gradeId Int
+  grade   Grade @relation(fields: [gradeId], references: [id])
+}
+
+model Subject {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  teachers Teacher[]
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        Int      @id @default(autoincrement())
+  name      String
+  day       Day
+  startTime DateTime
+  endTime   DateTime
+
+  exam       Exam[]
+  assignment Assignment[]
+  attendance Attendance[]
+
+  subjectId Int
+  subject   Subject @relation(fields: [subjectId], references: [id])
+
+  classId Int
+  class   Class @relation(fields: [classId], references: [id])
+
+  TeacherId String
+  teacher   Teacher @relation(fields: [TeacherId], references: [id])
+}
+
+model Exam {
+  id        Int      @id @default(autoincrement())
+  startTime DateTime
+  endTime   DateTime
+
+  result Result[]
+
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+}
+
+model Assignment {
+  id        Int      @id @default(autoincrement())
+  title     String
+  startDate DateTime
+  dueDate   DateTime
+
+  result Result[]
+
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+}
+
+model Result {
+  id    Int @id @default(autoincrement())
+  score Int
+
+  examId Int?
+  exam   Exam? @relation(fields: [examId], references: [id])
+
+  assignmentId Int?
+  assignment   Assignment? @relation(fields: [assignmentId], references: [id])
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+}
+
+model Attendance {
+  id      Int      @id @default(autoincrement())
+  date    DateTime
+  present Boolean
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+
+  lessonId Int
+  lesson   Lesson @relation(fields: [lessonId], references: [id])
+}
+
+model Event {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  startDate   DateTime
+  endDate     DateTime
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id])
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  date        DateTime
+
+  classId Int?
+  class   Class? @relation(fields: [classId], references: [id])
+}
+
+enum UserSex {
+  MALE
+  FEMALE
+}
+
+enum Day {
+  MONDAY
+  TUESDAY
+  WEDNESDAY
+  THURSDAY
+  FRIDAY
+  SATURDAY
+  SUNDAY
+}
